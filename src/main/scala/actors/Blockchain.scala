@@ -1,9 +1,9 @@
 package actors
 
-import blockchain.{Block, Transaction}
+import blockchain.{Block, GenesisBlock, Transaction}
 import pow.ProofOfWork
 
-case class Blockchain(private var lastBlock: Block) {
+case class Blockchain(private var lastBlock: Block = GenesisBlock) {
   def getBlock: Block = lastBlock
   def chainNewBlock(proof: Long, transactions: Seq[Transaction]): Boolean = {
     if (ProofOfWork.isValidProof(getBlock.hash, proof)) {

@@ -1,23 +1,30 @@
 package actors
 
-import blockchain.{GenesisBlock, Transaction}
+import blockchain.Transaction
 
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
-case class Node(nodeId: String) {
+case class Node(nodeId: String, blockchain: Blockchain) {
+  //private var currMiner: Miner = null
   val broker: TransactionManager = TransactionManager()
-  val blockchain: Blockchain = Blockchain(GenesisBlock)
 
   def addTransaction(t: Transaction): Unit = {
     broker.addTransaction(t)
   }
+//  def updateBlockchain() = {
+//    currMiningAction.
+//  }
 
-  def mine(): Unit = {
+  def mine(): Miner = {
     val lastHash = blockchain.getBlock.hash
-    val proof = Await.result(Miner(lastHash).action, Duration.Inf)
-    val transaction = Transaction("coinbase", nodeId, 1)
-    addTransaction(transaction)
-    blockchain.chainNewBlock(proof, Seq(transaction))
+    val miner = Miner(lastHash)
+    val action = for {
+      proof <- miner.action
+      trx <- Future(Transaction("coinbase", nodeId, 1))
+      _ <- Future(addTransaction(trx))
+      _ <- Future.apply(blockchain.chainNewBlock(proof, Seq(trx)))
+    } yield ()
+    miner
   }
 }
