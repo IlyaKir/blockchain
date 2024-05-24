@@ -1,18 +1,16 @@
-import actors.{Blockchain, Node}
+import actors.{Blockchain, Node, NodeManager}
 
 object Main extends App {
   private val blockchain = Blockchain()
+  private val nodeManager = NodeManager()
 
-  def main(): Unit = {
-    val node1 = Node("id1", blockchain)
-    val miner = node1.mine()
-    Thread.sleep(2000)
-    println("Stopping")
-    miner.stop()
+  val node1 = Node("id1", 0, blockchain, nodeManager)
+  val node2 = Node("id2", 1000000000, blockchain, nodeManager)
+  nodeManager.addNode(node1, node2)
 
-    println("Finish")
-    Thread.sleep(5000)
-  }
+  val miner1 = node1.mine()
+  val miner2 = node2.mine()
 
-  main()
+  Thread.sleep(10000)
+  println("Finish")
 }

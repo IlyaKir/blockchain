@@ -7,8 +7,8 @@ import scala.concurrent.Future
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-case class Miner(hash: String, startProof: Long = 0) {
-  val action: Future[Long] = start
+case class Miner(nodeId: String, hash: String, startProof: Long = 0) {
+  val proof: Future[Long] = start
   private var isStopped: Boolean = false
 
   def stop(): Unit = isStopped = true
@@ -16,9 +16,12 @@ case class Miner(hash: String, startProof: Long = 0) {
 
   private def start: Future[Long] = {
     Future(mine()).flatMap {
-      case proof if proof > 0 => Future.successful(proof)
+      case proof if proof > 0 => Future.successful{
+        println(s"Mined successfully; ${nodeId}")
+        proof
+      }
       case _ => Future.failed {
-        println("Miner is stopped")
+        println(s"Miner is stopped; ${nodeId}")
         new Throwable("Miner is stopped")
       }
     }
