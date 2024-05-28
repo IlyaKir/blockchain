@@ -16,12 +16,9 @@ case class Miner(nodeId: String, hash: String, startProof: Long = 0) {
 
   private def start: Future[Long] = {
     Future(mine()).flatMap {
-      case proof if proof > 0 => Future.successful{
-        println(s"Mined successfully; ${nodeId}")
-        proof
-      }
+      case proof if proof > 0 => Future.successful(proof)
       case _ => Future.failed {
-        println(s"Miner is stopped; ${nodeId}")
+        println(s"Miner ${nodeId} is stopped")
         new Throwable("Miner is stopped")
       }
     }

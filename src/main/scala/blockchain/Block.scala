@@ -1,6 +1,6 @@
 package blockchain
 
-import hash.HashAlgorithms
+import crypto.HashAlgorithms
 
 trait Block {
   val index: Int // current height of chain
@@ -22,7 +22,7 @@ trait Block {
 
 case object GenesisBlock extends Block {
   val index: Int = 0
-  val hash: String = ""
+  val hash: String = "09ca7e4eaa6e8ae9c7d261167129184883644d07dfba7cbfbc4c8a2e08360d5b"
   val previousBlock: Block = null
   val proof: Long = -1L
   val transactions: Seq[Transaction] = Seq.empty

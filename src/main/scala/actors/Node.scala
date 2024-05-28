@@ -1,6 +1,7 @@
 package actors
 
-import blockchain.Transaction
+import blockchain.{CoinbaseTransactionInput, Transaction, TransactionOutput}
+import crypto.ECKeysGenerator
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -9,34 +10,36 @@ case class Node(nodeId: String,
                 startProof: Long,
                 blockchain: Blockchain,
                 nodeManager: NodeManager) {
-  private var currMiner: Option[Miner] = None
-  val broker: TransactionManager = TransactionManager()
+  val (privateKey, publicKey) = ECKeysGenerator.generateKeys()
 
-  def addTransaction(t: Transaction): Unit = {
-    broker.addTransaction(t)
-  }
+  private var currMiner: Option[Miner] = None
 
   // returns new miner
-  def blockchainUpdated(): Miner = {
+  def blockchainUpdated(): Unit = {
     println(s"Blockchain updated: ${nodeId}")
     currMiner.foreach(_.stop())
-    mine()
+    //mine()
   }
 
-  def mine(): Miner = {
+  def mine(): Future[Unit] = {
     println(s"Start mining: ${nodeId}")
     val lastHash = blockchain.getBlock.hash
+    println(s"LASTHASH = ${lastHash}")
     val miner = Miner(nodeId, lastHash, startProof)
     val action = for {
       proof <- miner.proof
-      trx <- Future(Transaction("coinbase", nodeId, 1))
-      _ <- Future(addTransaction(trx))
-      _ <- Future(blockchain.chainNewBlock(proof, Seq(trx)))
+      trx <- Future { Transaction(
+          toNodeId = nodeId,
+          input = new CoinbaseTransactionInput(),
+          output = TransactionOutput(publicKey = publicKey, satoshi = 100)
+        ) }
+      _ <- Future(blockchain.transactionManager.addTransaction(trx))
+      _ <- Future(blockchain.chainNewBlock(proof))
       _ <- Future {
         nodeManager.getAllNodes.filter(_.nodeId != nodeId).foreach(_.blockchainUpdated())
       }
     } yield ()
     currMiner = Some(miner)
-    miner
+    action
   }
 }
